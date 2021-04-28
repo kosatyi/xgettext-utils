@@ -249,7 +249,7 @@ const generator = function(options) {
     return asyncAll(list);
 }
 
-export {
+export default {
     extract,
     generator
 };
