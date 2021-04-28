@@ -249,9 +249,7 @@ const generator = function(options) {
     return asyncAll(list);
 }
 
-const xGetText = {
+export {
     extract,
     generator
 };
-
-export default xGetText;
