@@ -248,3 +248,8 @@ const generator = function(options) {
     });
     return asyncAll(list);
 }
+
+export default {
+    compile,
+    generator
+}
