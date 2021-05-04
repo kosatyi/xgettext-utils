@@ -3,14 +3,19 @@
   "license": "MIT",
   "version": "0.0.0",
   "description": "xgettext utilities for node.js",
-  "main": "index.js",
+  "main": "dist/index.js",
   "dependencies": {
     "fs-extra": "^9.1.0",
     "po2json": "^0.4.5",
     "walk": "^2.3.14"
   },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0"
+  },
   "scripts": {
     "test": "",
+    "build": "babel src -d dist",
     "preversion": "npm test",
     "version": "npm run build && git add -A dist",
     "postversion": "git push && git push --tags"

@@ -1,10 +1,10 @@
-const fs = require('fs')
-const fse = require('fs-extra')
-const util = require('util');
-const walk = require('walk');
-const path = require('path');
-const exec = require('child_process').exec;
-const po2json = require('po2json');
+import {exec} from 'child_process';
+import fs from 'fs';
+import fse from 'fs-extra';
+import util from 'util';
+import walk from 'walk';
+import path from 'path';
+import po2json from 'po2json';
 
 const async = function (callback) {
     return new Promise(callback);
@@ -23,8 +23,6 @@ const execute = function (command, params) {
         params = params.join(' ');
         exec([command, params].join(' '), function (error, stdout) {
             if (error !== null) {
-                //console.log(command, params);
-                //console.log(error);
                 reject(error);
             } else {
                 resolve(stdout);
