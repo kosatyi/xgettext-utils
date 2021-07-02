@@ -6,22 +6,22 @@ import walk from 'walk';
 import path from 'path';
 import po2json from 'po2json';
 
-const async = function (callback) {
+const async = (callback) => {
     return new Promise(callback);
 }
 
-const asyncAll = function (list) {
+const asyncAll = (list) => {
     return Promise.all(list);
 }
 
-const extend = function (target,source) {
-    return Object.assign(target,source);
+const extend = (target, source) => {
+    return Object.assign(target, source);
 }
 
-const execute = function (command, params) {
-    return async(function (resolve, reject) {
+const execute = (command, params) => {
+    return async((resolve, reject) => {
         params = params.join(' ');
-        exec([command, params].join(' '), function (error, stdout) {
+        exec([command, params].join(' '), (error, stdout) => {
             if (error !== null) {
                 reject(error);
             } else {
@@ -31,10 +31,10 @@ const execute = function (command, params) {
     })
 }
 
-const flatten = function (a) {
+const flatten = (a) => {
     let result = [];
     (function flat(a) {
-        [].slice.call(a).forEach(function (i) {
+        [].slice.call(a).forEach((i) => {
             if (Array.isArray(i)) flat(i);
             else result.push(i);
         });
@@ -42,14 +42,14 @@ const flatten = function (a) {
     return result;
 }
 
-const unique = function (arrArg) {
-    return arrArg.filter(function (elem, pos, arr) {
+const unique = (arrArg) => {
+    return arrArg.filter((elem, pos, arr) => {
         return arr.indexOf(elem) === pos;
     });
 };
 
-const fileExist = function (file) {
-    return async(function (resolve, reject) {
+const fileExist = (file) => {
+    return async((resolve, reject) => {
         fs.open(file, 'r', function (error) {
             if (error) {
                 reject();
@@ -60,16 +60,15 @@ const fileExist = function (file) {
     })
 }
 
-const readFile = function (file) {
-    return fs.readFileSync(file).toString();
-}
+const readFile = (file) => fs.readFileSync(file).toString();
 
-const createFolder = function (path) {
+
+const createFolder = (path) => {
     fse.ensureDirSync(path);
     return path;
 }
 
-const writeFile = function (file, content) {
+const writeFile = (file, content) => {
     fse.ensureFileSync(file);
     fs.writeFileSync(file, content);
 }
@@ -77,31 +76,26 @@ const writeFile = function (file, content) {
 const listFiles = function (folder) {
     if (Array.isArray(folder)) {
         let list = [];
-        folder.forEach(function (path) {
-            list.push(listFiles(path));
-        })
-        return asyncAll(list).then(function () {
-            let result = flatten(arguments);
-            return new Promise(function (resolve) {
-                return resolve(result);
-            })
+        folder.forEach((path) => list.push(listFiles(path)));
+        return asyncAll(list).then((...args) => {
+            return async((resolve) => resolve(flatten(args)))
         });
     }
-    return async(function (resolve, reject) {
+    return async((resolve, reject) => {
         let walker = walk.walk(folder, {followLinks: false});
         let files = [];
         walker.on('file', function (root, file, next) {
             files.push(root + '/' + file.name);
             next();
-        }).on('error', function (e) {
+        }).on('error', (e) => {
             reject(e);
-        }).on('end', function () {
+        }).on('end', () => {
             resolve(files);
         });
     });
 }
 
-const xgettext = function (options) {
+const xgettext = (options) => {
     let params = [];
     options = Object.assign({
         noLocation: false,
@@ -142,53 +136,53 @@ const xgettext = function (options) {
     return execute('xgettext', params);
 }
 
-const compile = function (pofile, mofile) {
+const compile = (pofile, mofile) => {
     return execute('msgfmt', [pofile, '-o', mofile]);
 }
 
-const merge = function (pofile, potfile) {
+const merge = (pofile, potfile) => {
     let command;
     let params;
-    return fileExist(pofile).then(function () {
+    return fileExist(pofile).then(() => {
         command = 'msgmerge'
         params = ['-q', '-U', '--no-fuzzy-matching', '--previous', '--force-po', pofile, potfile];
         return execute(command, params);
-    }, function () {
+    }, () => {
         command = 'cp'
         params = [potfile, pofile];
         return execute(command, params);
     });
 }
 
-const json = function (pofile, jsonfile) {
+const json = (pofile, jsonfile) => {
     let content = readFile(pofile);
     let jsonData = po2json.parse(content, {pretty: true, stringify: true, format: 'mf'});
     writeFile(jsonfile, jsonData);
 }
 
-const javascript = function (ns, lang, jsonfile, jsfile) {
+const javascript = (ns, lang, jsonfile, jsfile) => {
     let source = readFile(jsonfile);
     let format = '(function(n,k,v){this[n]=this[n]||{};this[n][k]=v})(%j,%j,%s);';
     let content = util.format(format, ns, lang, source.toString());
     writeFile(jsfile, content);
 }
 
-const extract = function (options) {
+const extract = (options) => {
     options = extend({
         path: '.',
         target: './.locale',
         match: /_(?:\(|\s)(["'])(.+?)\1/g,
         replace: '_(\'$2\');'
     }, options);
-    return listFiles(options.path).then(function (list) {
+    return listFiles(options.path).then((list) => {
         let translation = [];
-        list.forEach(function (file) {
+        list.forEach((file) => {
             let source = readFile(file);
             let matches = source.match(options.match);
             if (matches)
                 translation = translation.concat(matches);
         });
-        translation = translation.map(function (item) {
+        translation = translation.map((item) => {
             item = item.trim();
             if (options.replace)
                 item = item.replace(options.match, options.replace);
@@ -199,7 +193,7 @@ const extract = function (options) {
     });
 }
 
-const generator = function(options) {
+const generator = function (options) {
     options = extend({
         namespace: 'i18n',
         filename: 'messages',
@@ -213,15 +207,15 @@ const generator = function(options) {
         target: '.locales',
         charset: 'UTF-8'
     }, options);
-    let list = options.locales.map(function (locale) {
-        let folder = createFolder(path.join(options.target,locale,options.domain));
+    let list = options.locales.map((locale) => {
+        let folder = createFolder(path.join(options.target, locale, options.domain));
         let potfile = path.join(folder, [options.filename, 'pot'].join('.'));
         let pofile = path.join(folder, [options.filename, 'po'].join('.'));
         let mofile = path.join(folder, [options.filename, 'mo'].join('.'));
-        let jsonfile = path.join(options.target, locale,[options.filename, 'json'].join('.'));
-        let jsfile = path.join(options.target, locale,[options.filename, 'js'].join('.'));
-        return listFiles(options.source).then(function(files){
-            return xgettext({
+        let jsonfile = path.join(options.target, locale, [options.filename, 'json'].join('.'));
+        let jsfile = path.join(options.target, locale, [options.filename, 'js'].join('.'));
+        return listFiles(options.source).then((files) =>
+            xgettext({
                 files: files,
                 potfile: potfile,
                 noLocation: options.noLocation,
@@ -230,19 +224,15 @@ const generator = function(options) {
                 language: options.language,
                 charset: options.charset
             })
-        }).then(function () {
-            return merge(pofile, potfile);
-        }).then(function () {
-            return compile(pofile, mofile);
-        }).then(function () {
-            return json(pofile, jsonfile);
-        }).then(function () {
-            return javascript(options.namespace, locale, jsonfile, jsfile);
-        }).then(function () {
-            console.log('generate locale', locale);
-        }).catch(function (e) {
-            console.log(e);
-        });
+        ).then(() => merge(pofile, potfile))
+            .then(() => compile(pofile, mofile))
+            .then(() => json(pofile, jsonfile))
+            .then(() => javascript(options.namespace, locale, jsonfile, jsfile))
+            .then(() => {
+                console.log('generate locale', locale);
+            }).catch((e) => {
+                console.log(e);
+            });
     });
     return asyncAll(list);
 }

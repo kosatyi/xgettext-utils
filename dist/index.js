@@ -99,12 +99,15 @@ var listFiles = function listFiles(folder) {
     if (Array.isArray(folder)) {
         var list = [];
         folder.forEach(function (path) {
-            list.push(listFiles(path));
+            return list.push(listFiles(path));
         });
         return asyncAll(list).then(function () {
-            var result = flatten(arguments);
-            return new Promise(function (resolve) {
-                return resolve(result);
+            for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+                args[_key] = arguments[_key];
+            }
+
+            return async(function (resolve) {
+                return resolve(flatten(args));
             });
         });
     }
