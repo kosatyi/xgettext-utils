@@ -206,16 +206,35 @@ var extract = function extract(options) {
     }, options);
     return listFiles(options.path).then(function (list) {
         var translation = [];
+        var replace = options.replace;
         list.forEach(function (file) {
             var source = readFile(file);
-            var matches = source.match(options.match);
-            if (matches) translation = translation.concat(matches);
+            var regexp = Array.isArray(options.match) ? options.match : [options.match];
+            regexp.forEach(function (expr) {
+                var matches = source.match(expr);
+                if (matches) {
+                    matches.forEach(function (item) {
+                        item = item.trim();
+                        if (replace) {
+                            item = item.replace(expr, replace);
+                        }
+                        //item = item.replace(options.match, options.replace);
+                        translation.push(item);
+                    });
+                    //translation = translation.concat(matches);
+                }
+            });
+            //let matches = source.match(options.match);
+            //if (matches)
+            //    translation = translation.concat(matches);
         });
-        translation = translation.map(function (item) {
-            item = item.trim();
-            if (options.replace) item = item.replace(options.match, options.replace);
-            return item;
-        });
+        console.log(translation);
+        // translation = translation.map((item) => {
+        //     item = item.trim();
+        //     if (options.replace)
+        //         item = item.replace(options.match, options.replace);
+        //     return item;
+        // })
         translation = unique(translation);
         writeFile(options.target, translation.join('\n'));
     });
