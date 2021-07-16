@@ -6,7 +6,9 @@
   "main": "dist/index.js",
   "devDependencies": {
     "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
+    "babel-preset-env": "^1.7.0"
+  },
+  "dependencies": {
     "fs-extra": "^9.1.0",
     "po2json": "^0.4.5",
     "walk": "^2.3.14"
