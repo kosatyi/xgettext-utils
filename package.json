@@ -4,17 +4,16 @@
   "version": "0.0.1",
   "description": "xgettext utilities for node.js",
   "main": "dist/index.js",
-  "dependencies": {
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
     "fs-extra": "^9.1.0",
     "po2json": "^0.4.5",
     "walk": "^2.3.14"
   },
-  "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.7.0"
-  },
   "scripts": {
     "test": "",
+    "start": "babel -w src -d dist",
     "build": "babel src -d dist",
     "preversion": "npm test",
     "version": "npm run build && git add -A dist",

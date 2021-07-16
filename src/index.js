@@ -10,6 +10,7 @@ const async = (callback) => {
     return new Promise(callback);
 }
 
+
 const asyncAll = (list) => {
     return Promise.all(list);
 }
@@ -177,7 +178,7 @@ const extract = (options) => {
     return listFiles(options.path).then((list) => {
         let translation = [];
         let replace  = options.replace;
-        list.forEach((file) => {
+        list.sort().forEach((file) => {
             let source = readFile(file);
             let regexp = Array.isArray(options.match) ? options.match : [options.match];
             regexp.forEach((expr)=>{
@@ -188,23 +189,11 @@ const extract = (options) => {
                         if(replace){
                             item = item.replace(expr, replace);
                         }
-                        //item = item.replace(options.match, options.replace);
                         translation.push(item);
                     })
-                    //translation = translation.concat(matches);
                 }
             });
-            //let matches = source.match(options.match);
-            //if (matches)
-            //    translation = translation.concat(matches);
         });
-        console.log(translation);
-        // translation = translation.map((item) => {
-        //     item = item.trim();
-        //     if (options.replace)
-        //         item = item.replace(options.match, options.replace);
-        //     return item;
-        // })
         translation = unique(translation);
         writeFile(options.target, translation.join('\n'));
     });

@@ -207,7 +207,7 @@ var extract = function extract(options) {
     return listFiles(options.path).then(function (list) {
         var translation = [];
         var replace = options.replace;
-        list.forEach(function (file) {
+        list.sort().forEach(function (file) {
             var source = readFile(file);
             var regexp = Array.isArray(options.match) ? options.match : [options.match];
             regexp.forEach(function (expr) {
@@ -218,23 +218,11 @@ var extract = function extract(options) {
                         if (replace) {
                             item = item.replace(expr, replace);
                         }
-                        //item = item.replace(options.match, options.replace);
                         translation.push(item);
                     });
-                    //translation = translation.concat(matches);
                 }
             });
-            //let matches = source.match(options.match);
-            //if (matches)
-            //    translation = translation.concat(matches);
         });
-        console.log(translation);
-        // translation = translation.map((item) => {
-        //     item = item.trim();
-        //     if (options.replace)
-        //         item = item.replace(options.match, options.replace);
-        //     return item;
-        // })
         translation = unique(translation);
         writeFile(options.target, translation.join('\n'));
     });
