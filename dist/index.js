@@ -149,6 +149,9 @@ var xgettext = function xgettext(options) {
     if (options.language) {
         params.push(['--language=', options.language].join(''));
     }
+    params.push('--strict');
+    params.push('--debug');
+
     if (options.directory) {
         params.push('-d');
         params.push(options.directory);
@@ -238,7 +241,7 @@ var generator = function generator(options) {
         keywords: [],
         source: [],
         noLocation: true,
-        omitHeader: true,
+        omitHeader: false,
         target: '.locales',
         charset: 'UTF-8'
     }, options);
