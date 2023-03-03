@@ -1,11 +1,97 @@
-import {exec} from 'child_process';
 import fs from 'fs';
 import fse from 'fs-extra';
 import util from 'util';
-import walk from 'walk';
 import path from 'path';
+import walk from 'walk';
+import {po} from 'gettext-parser'
+import {exec} from 'child_process';
 
-import {parse} from "./module/po2json";
+export function po2json(buffer, options) {
+    options = options || {};
+    const defaults = {
+        pretty: false,
+        fuzzy: false,
+        stringify: false,
+        format: 'raw',
+        domain: 'messages',
+        charset: 'utf8'
+    };
+    for (let property in defaults) {
+        options[property] = 'undefined' !== typeof options[property] ? options[property] : defaults[property];
+    }
+    const parsed = po.parse( buffer, defaults.charset );
+    let contexts = parsed.translations;
+    let result = {};
+    Object.keys(contexts).forEach(function (context) {
+        const translations = parsed.translations[context];
+        const pluralForms = parsed.headers ? parsed.headers['plural-forms'] : '';
+
+        Object.keys(translations).forEach(function (key) {
+            const t = translations[key],
+                translationKey = context.length ? context + '\u0004' + key : key,
+                fuzzy = t.comments && t.comments.flag && t.comments.flag.match(/fuzzy/) !== null;
+
+            if (!fuzzy || options.fuzzy) {
+                if (options.format === 'mf') {
+                    result[translationKey] = t.msgstr[0];
+                } else if (options.format === 'jed1.x') {
+                    result[translationKey] = [ t.msgid_plural ? t.msgid_plural : null ].concat(t.msgstr);
+                } else {
+                    if(pluralForms === 'nplurals=1; plural=0;') {
+                        result[translationKey] = [ t.msgid_plural ? t.msgid_plural : null ].concat(t.msgid_plural ? [t.msgstr] : t.msgstr);
+                    } else {
+                        result[translationKey] = [ t.msgid_plural ? t.msgid_plural : null ].concat(t.msgstr);
+                    }
+                }
+            }
+
+            // In the case of fuzzy or empty messages, use msgid(/msgid_plural)
+            if (options['fallback-to-msgid'] && (fuzzy && !options.fuzzy || t.msgstr[0] === '')) {
+                if (options.format === 'mf') {
+                    result[translationKey] = key;
+                } else {
+                    result[translationKey] = [ t.msgid_plural ? t.msgid_plural : null ]
+                        .concat(t.msgid_plural ? [key, t.msgid_plural] : [key]);
+                }
+            }
+
+        });
+    });
+    if (parsed.headers) {
+        result[''] = parsed.headers;
+    }
+    if (options.format === 'mf') {
+        delete result[''];
+    }
+    if (options.format.indexOf('jed') === 0) {
+        let jed = {
+            domain: options.domain,
+            locale_data: {}
+        };
+        if (options.format === 'jed1.x'){
+            for (let key in result) {
+                if (result.hasOwnProperty(key) && key !== ''){
+                    for (let i = 2; i < result[key].length; i++){
+                        if ('' === result[key][i]){
+                            result[key][i] = result[key][0];
+                        }
+                    }
+                    result[key].shift();
+                }
+            }
+        }
+        jed.locale_data[options.domain] = result;
+        jed.locale_data[options.domain][''] = {
+            domain: options.domain,
+            plural_forms: result['']['plural-forms'],
+            lang: result['']['language']
+        };
+
+        result = jed;
+    }
+    return options.stringify ? JSON.stringify( result, null, options.pretty ? '   ' : null ) : result;
+}
+
 
 const async = (callback) => {
     return new Promise(callback);
@@ -17,19 +103,6 @@ const asyncAll = (list) => {
 
 const extend = (target, source) => {
     return Object.assign(target, source);
-}
-
-const execute = (command, params) => {
-    return async((resolve, reject) => {
-        params = params.join(' ');
-        exec([command, params].join(' '), (error, stdout) => {
-            if (error !== null) {
-                reject(error);
-            } else {
-                resolve(stdout);
-            }
-        });
-    })
 }
 
 const flatten = (a) => {
@@ -49,6 +122,21 @@ const unique = (arrArg) => {
     });
 };
 
+const execute = (command, params) => {
+    return async((resolve, reject) => {
+        params = params.join(' ');
+        exec([command, params].join(' '), (error, stdout) => {
+            if (error !== null) {
+                reject(error);
+            } else {
+                resolve(stdout);
+            }
+        });
+    })
+}
+
+
+
 const fileExist = (file) => {
     return async((resolve, reject) => {
         fs.open(file, 'r', function (error) {
@@ -62,7 +150,6 @@ const fileExist = (file) => {
 }
 
 const readFile = (file) => fs.readFileSync(file).toString();
-
 
 const createFolder = (path) => {
     fse.ensureDirSync(path,{});
@@ -160,7 +247,7 @@ const merge = (pofile, potfile) => {
 
 const json = (pofile, jsonfile) => {
     let content = readFile(pofile);
-    let jsonData = po2json.parse(content, {pretty: true, stringify: true, format: 'mf'});
+    let jsonData = po2json(content, {pretty: true, stringify: true, format: 'mf'});
     writeFile(jsonfile, jsonData);
 }
 
@@ -171,7 +258,7 @@ const javascript = (ns, lang, jsonfile, jsfile) => {
     writeFile(jsfile, content);
 }
 
-const extract = (options) => {
+export function extract(options){
     options = extend({
         path: '.',
         target: './.locale',
@@ -202,7 +289,7 @@ const extract = (options) => {
     });
 }
 
-const generator = function (options) {
+export function generator(options){
     options = extend({
         namespace: 'i18n',
         filename: 'messages',
@@ -245,7 +332,3 @@ const generator = function (options) {
     });
     return asyncAll(list);
 }
-
-exports.extract = extract;
-
-exports.generator = generator;
