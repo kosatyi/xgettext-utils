@@ -22,9 +22,7 @@ var _path = require('path');
 
 var _path2 = _interopRequireDefault(_path);
 
-var _po2json = require('po2json');
-
-var _po2json2 = _interopRequireDefault(_po2json);
+var _po2json = require('./module/po2json');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -86,7 +84,7 @@ var readFile = function readFile(file) {
 };
 
 var createFolder = function createFolder(path) {
-    _fsExtra2.default.ensureDirSync(path);
+    _fsExtra2.default.ensureDirSync(path, {});
     return path;
 };
 
@@ -189,7 +187,7 @@ var merge = function merge(pofile, potfile) {
 
 var json = function json(pofile, jsonfile) {
     var content = readFile(pofile);
-    var jsonData = _po2json2.default.parse(content, { pretty: true, stringify: true, format: 'mf' });
+    var jsonData = po2json.parse(content, { pretty: true, stringify: true, format: 'mf' });
     writeFile(jsonfile, jsonData);
 };
 

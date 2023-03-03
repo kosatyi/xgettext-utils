@@ -4,12 +4,12 @@ import fse from 'fs-extra';
 import util from 'util';
 import walk from 'walk';
 import path from 'path';
-import po2json from 'po2json';
+
+import {parse} from "./module/po2json";
 
 const async = (callback) => {
     return new Promise(callback);
 }
-
 
 const asyncAll = (list) => {
     return Promise.all(list);
@@ -65,7 +65,7 @@ const readFile = (file) => fs.readFileSync(file).toString();
 
 
 const createFolder = (path) => {
-    fse.ensureDirSync(path);
+    fse.ensureDirSync(path,{});
     return path;
 }
 
