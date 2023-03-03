@@ -1,7 +1,7 @@
 {
   "name": "xgettext-utils",
   "license": "MIT",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "xgettext utilities for node.js",
   "main": "dist/index.js",
   "devDependencies": {
