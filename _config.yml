@@ -8,6 +8,7 @@ remote_theme: kosatyi/sjt
 navigation: false
 projects: true
 
+url: https://kosatyi.com
 baseurl: /xgettext-utils
 
 brand: xgettext-utils
